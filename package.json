@@ -1,0 +1,32 @@
+{
+  "name": "01-api-playwright",
+  "version": "1.0.0",
+  "description": "Automated API Testing with Playwright, TypeScript, and Zod against ServeRest API",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:contract": "playwright test tests/contract",
+    "test:e2e": "playwright test tests/e2e",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [
+    "playwright",
+    "api-testing",
+    "typescript",
+    "zod",
+    "contract-testing",
+    "serverest",
+    "qa",
+    "sdet"
+  ],
+  "author": "Victor",
+  "license": "MIT",
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@playwright/test": "1.50.1",
+    "@types/node": "^20.11.24",
+    "dotenv": "^16.4.5",
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
+  }
+}

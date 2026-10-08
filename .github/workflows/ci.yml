@@ -1,0 +1,67 @@
+name: API Automation CI & Scheduled Regression
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Executa a cada 8 horas (00:00, 08:00, 16:00 UTC)
+    - cron: '0 0,8,16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-and-log:
+    name: Run API Tests & Record Activity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Playwright API Tests
+        run: |
+          npm test
+          echo "STATUS=PASSED" >> $GITHUB_ENV
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-api-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Update Activity Log
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p .github/logs
+          NOW=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "- **Execução:** $NOW | **Status:** ✅ ${{ env.STATUS || 'PASSED' }} | **Módulo:** Playwright API & Contracts" >> .github/logs/daily-runs.md
+
+      - name: Commit and Push Activity
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/logs/daily-runs.md
+          if git diff --staged --quiet; then
+            echo "Nenhuma alteração a commitar."
+          else
+            git commit -m "chore(ci): scheduled regression run [$(date -u +'%Y-%m-%d %H:%M UTC')]"
+            git push origin HEAD:${{ github.ref }}
+          fi
